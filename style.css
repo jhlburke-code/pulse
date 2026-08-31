@@ -21,6 +21,11 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* The HTML `hidden` attribute must beat any class-level `display: flex/grid` rule.
+   Without this, `.presenter-live { display: flex }` wins on specificity
+   and the element never actually hides, even when `hidden=true`. */
+[hidden] { display: none !important; }
+
 html, body { height: 100%; }
 
 body {
