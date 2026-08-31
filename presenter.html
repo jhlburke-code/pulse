@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse — Presenter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="presenter">
+  <div class="red-bar"></div>
+  <div class="crosshair"><span class="crosshair-dot"></span></div>
+
+  <!-- CREATE -->
+  <main class="page-wrap" id="create-view">
+    <header class="brand">
+      <div class="logo-mark"></div>
+      <p class="tagline">PULSE — PRESENTER</p>
+    </header>
+
+    <section class="form-wrap">
+      <h1 class="display-md">Start a poll</h1>
+      <p class="lede">Pick a question type, write your question, share the join code.</p>
+
+      <form id="create-form" class="form" autocomplete="off">
+        <div class="field">
+          <span class="field-label">Question type</span>
+          <div class="type-row" role="radiogroup">
+            <label class="type-pill"><input type="radio" name="qtype" value="multiple_choice" checked><span>Multiple choice</span></label>
+            <label class="type-pill"><input type="radio" name="qtype" value="word_cloud"><span>Word cloud</span></label>
+            <label class="type-pill"><input type="radio" name="qtype" value="rating"><span>Rating 1–5</span></label>
+          </div>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Your question</span>
+          <input type="text" name="question" required placeholder="e.g. How confident do you feel about AI in your work?" maxlength="160">
+        </label>
+
+        <label class="field" id="options-field">
+          <span class="field-label">Options <span class="muted">(one per line, 2–6)</span></span>
+          <textarea name="options" rows="4" placeholder="Strongly agree&#10;Agree&#10;Neutral&#10;Disagree&#10;Strongly disagree"></textarea>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Your name <span class="muted">(shown on audience screen)</span></span>
+          <input type="text" name="presenter" maxlength="40" placeholder="Anonymous">
+        </label>
+
+        <button type="submit" class="btn-primary" id="launch-btn">Launch poll</button>
+        <p class="form-error" id="create-error" hidden></p>
+      </form>
+    </section>
+  </main>
+
+  <!-- LIVE -->
+  <main class="page-wrap presenter-live" id="live-view" hidden>
+    <header class="live-header">
+      <div class="join-code-block">
+        <p class="join-code-label">JOIN CODE</p>
+        <p class="join-code" id="join-code">————</p>
+        <p class="join-count"><span id="response-count">0</span> <span id="response-count-label">responses</span></p>
+      </div>
+      <div class="qr-block">
+        <img id="qr-img" alt="QR code" width="148" height="148">
+        <p class="qr-hint">Scan, or visit<br><span id="audience-url">…</span></p>
+      </div>
+    </header>
+
+    <section class="question-display">
+      <p class="presenter-by" id="presenter-by">—</p>
+      <h2 class="question-text" id="question-text">—</h2>
+    </section>
+
+    <section class="results-area" id="results-area">
+      <p class="results-empty muted">Waiting for the first response…</p>
+    </section>
+
+    <footer class="live-footer">
+      <button class="btn-ghost" id="close-btn">Close poll</button>
+      <button class="btn-ghost" id="new-btn">New poll</button>
+      <p class="slogan-mini">
+        <span class="s-ai">AI</span><span class="s-made">, made</span> <span class="s-human">human</span><span class="s-dot">.</span>
+      </p>
+    </footer>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>

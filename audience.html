@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse — Join</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="audience">
+  <div class="red-bar"></div>
+  <div class="crosshair"><span class="crosshair-dot"></span></div>
+
+  <!-- JOIN -->
+  <main class="page-wrap" id="join-view">
+    <header class="brand">
+      <div class="logo-mark"></div>
+      <p class="tagline">PULSE — JOIN</p>
+    </header>
+
+    <section class="form-wrap">
+      <h1 class="display-md">Enter the code</h1>
+      <p class="lede">Your presenter will share a 4-character code on screen.</p>
+
+      <form id="join-form" class="form" autocomplete="off">
+        <label class="field">
+          <span class="field-label">Join code</span>
+          <input type="text" name="code" id="code-input" required maxlength="4" minlength="4" placeholder="ABCD" autocapitalize="characters" spellcheck="false" class="code-input">
+        </label>
+        <button type="submit" class="btn-primary" id="join-btn">Join poll</button>
+        <p class="form-error" id="join-error" hidden></p>
+      </form>
+    </section>
+  </main>
+
+  <!-- VOTE -->
+  <main class="page-wrap audience-vote" id="vote-view" hidden>
+    <header class="vote-header">
+      <p class="presenter-by" id="vote-presenter">—</p>
+      <h2 class="question-text" id="vote-question">—</h2>
+    </header>
+    <section class="vote-area" id="vote-area"></section>
+  </main>
+
+  <!-- THANKS -->
+  <main class="page-wrap audience-thanks" id="thanks-view" hidden>
+    <div class="thanks-wrap">
+      <p class="thanks-emoji">✓</p>
+      <h1 class="thanks-title">You're in.</h1>
+      <p class="thanks-rank">You were response <span id="rank-num">#</span>.</p>
+      <p class="thanks-hint">Watch the presenter's screen for live results.</p>
+      <button class="btn-ghost" id="vote-again-btn">Vote again</button>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
