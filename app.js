@@ -186,7 +186,7 @@ function renderRatingResults(responses) {
       ${counts.map((c, i) => `
         <div class="rating-col">
           <div class="rating-col-count">${c}</div>
-          <div class="rating-col-fill" style="height:${Math.max(c > 0 ? 4 : 0, Math.round((c/max)*100)}%"></div>
+          <div class="rating-col-fill" style="height:${Math.max(c > 0 ? 4 : 0, Math.round((c/max)*100))}%"></div>
           <div class="rating-col-label">${i+1}</div>
         </div>
       `).join('')}
