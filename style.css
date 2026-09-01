@@ -234,6 +234,7 @@ h2.question-text {
   flex-direction: column;
   padding: 0 40px 60px;
   min-height: 100vh;
+  height: 100vh;          /* strict viewport height — no overflow into header */
 }
 
 /* ----- Forms ----- */
@@ -342,9 +343,10 @@ h2.question-text {
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 28px;
-  padding-top: 24px !important;
-  padding-bottom: 24px !important;
+  min-height: 0;            /* let flex children shrink inside fixed-height parent */
+  gap: 0;                  /* sections handle their own vertical padding */
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .live-header {
@@ -353,6 +355,8 @@ h2.question-text {
   justify-content: space-between;
   gap: 32px;
   flex-wrap: wrap;
+  padding: 2rem 0;          /* standardized vertical padding */
+  flex-shrink: 0;          /* never compress the header */
 }
 .join-code-block { display: flex; flex-direction: column; gap: 4px; }
 .join-code-label {
@@ -391,24 +395,33 @@ h2.question-text {
   padding: 8px;
   border-radius: 8px;
   display: block;
+  flex-shrink: 0;
 }
 .qr-hint {
   font-size: 13px;
   color: var(--white-muted);
   line-height: 1.4;
-  max-width: 220px;
+  max-width: 320px;          /* wider so URL fits on one line at typical viewports */
+  min-width: 0;             /* allow flex item to shrink without overflowing */
+  overflow-wrap: anywhere;  /* break cleanly anywhere if it still doesn't fit */
+  word-break: break-word;
 }
 .qr-hint span {
   font-weight: 700;
   color: var(--white);
-  font-size: 12px;
+  font-size: 11px;          /* smaller so the URL fits comfortably */
+  letter-spacing: 0.01em;
+  display: inline-block;
+  max-width: 100%;
+  overflow-wrap: anywhere;  /* URL can break at any character, no orphan letters */
   word-break: break-all;
 }
 
 .question-display {
   border-top: 1px solid var(--white-subtle);
   border-bottom: 1px solid var(--white-subtle);
-  padding: 24px 0;
+  padding: 2rem 0;          /* standardized vertical padding */
+  flex-shrink: 0;
 }
 .presenter-by {
   font-size: 13px;
@@ -419,13 +432,19 @@ h2.question-text {
   margin-bottom: 12px;
 }
 
+/* Main canvas — word cloud / bars / etc. Strict flex child,
+   grows to fill remaining space, never overlaps header or footer. */
 .results-area {
-  flex: 1;
+  flex: 1 1 auto;          /* grow + shrink, basis auto */
+  min-height: 0;          /* allow it to shrink inside the fixed-height parent */
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: stretch;
   gap: 14px;
-  min-height: 200px;
+  padding: 2rem 0;          /* standardized vertical padding */
+  overflow: hidden;        /* cloud words can't escape this container */
+  position: relative;      /* establish positioning context for cloud words */
 }
 .results-empty {
   font-size: 16px;
@@ -563,8 +582,9 @@ h2.question-text {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding-top: 20px;
+  padding: 2rem 0;          /* standardized vertical padding */
   margin-top: auto;
+  flex-shrink: 0;          /* never compress the footer */
   border-top: 1px solid var(--white-faint);
 }
 .live-footer .slogan-mini { margin-left: auto; font-size: 18px; }
