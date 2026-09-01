@@ -469,31 +469,39 @@ h2.question-text {
   margin-left: 6px;
 }
 
-/* Word cloud */
+/* Word cloud — absolutely-positioned, centered around (50%, 50%) */
 .cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  align-items: baseline;
-  padding: 20px 0;
-  min-height: 200px;
-  line-height: 1.2;
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  padding: 12px;
+  overflow: hidden;
 }
 .cloud-word {
-  font-weight: 700;
-  color: var(--white);
-  border-radius: 4px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
   padding: 2px 8px;
-  display: inline-block;
-  transition: opacity 0.5s, transform 0.5s, color 0.5s;
+  pointer-events: auto;
+  user-select: none;
+  transition: transform 0.25s ease, color 0.3s ease, opacity 0.3s ease;
+  animation: cloud-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
 }
-.cloud-word.tier-1 { color: var(--red); font-weight: 800; }
-.cloud-word.tier-2 { color: #e63946; }
-.cloud-word.fresh { animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-@keyframes pop-in {
-  0%   { transform: scale(0.4); opacity: 0; }
-  60%  { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); }
+.cloud-word.tier-1 {
+  /* red color + glow applied via inline style */
+  text-shadow: 0 0 24px rgba(204, 34, 41, 0.45),
+               0 0 4px  rgba(255, 255, 255, 0.15);
+}
+.cloud-word:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+  z-index: 10;
+}
+@keyframes cloud-pop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1.10); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 /* Rating */
