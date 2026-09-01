@@ -168,9 +168,8 @@ function renderCloudResults(responses) {
   const max = entries[0][1];
   const positions = placeWordsCloud(entries);
 
-  return positions.map((pos, i) => {
-    const word  = entries[i][0];
-    const count = entries[i][1];
+  const spans = entries.map(([word, count], i) => {
+    const pos = positions[i];
     const isTop      = i === 0;
     const isHighTier = !isTop && count >= max * 0.5;
 
@@ -180,37 +179,124 @@ function renderCloudResults(responses) {
     const weight  = isTop ? 800 : isHighTier ? 700 : 500;
     const color   = isTop ? 'var(--red)' : 'var(--white)';
     const opacity = isTop ? 1 : (isHighTier ? 0.95 : 0.78);
+    const zIndex  = isTop ? 5 : 1;
 
     return `<span class="cloud-word${isTop ? ' tier-1' : ''}"
-                  style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%;font-size:${sizePx.toFixed(0)}px;font-weight:${weight};color:${color};opacity:${opacity}"
+                  style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%;font-size:${sizePx.toFixed(0)}px;font-weight:${weight};color:${color};opacity:${opacity};z-index:${zIndex}"
                   data-w="${escapeHtml(word)}"
                   title="${escapeHtml(word)} · ${count} ${count === 1 ? 'vote' : 'votes'}">${escapeHtml(word)}</span>`;
-  }).join('');
+  });
+
+  // Render the top word LAST so it paints on top of any neighbour that
+  // might still graze its bounding box even after collision detection.
+  if (spans.length > 1) spans.push(spans.shift());
+  return spans.join('');
 }
 
-// Position words in concentric rings around the center, with deterministic jitter
-// so layout is stable across renders but doesn't look like a clock face.
+// Position words with real bounding-box collision detection and a padding gap.
+// Largest words claim the center; smaller words orbit outward along a spiral
+// until they find a non-colliding slot. Returns positions in entries order.
 function placeWordsCloud(entries) {
-  const positions = [];
-  for (let i = 0; i < entries.length; i++) {
-    if (i === 0) {
-      positions.push({ x: 50, y: 50 });
-      continue;
-    }
-    const ring       = Math.floor((i - 1) / 6) + 1;
-    const idxInRing  = (i - 1) % 6;
-    const angleBase   = (idxInRing / 6) * Math.PI * 2;
-    const ringOffset  = ring * 0.45;
-    const jitterA     = ((i * 9301  + 49297) % 233280) / 233280 - 0.5;
-    const jitterR     = ((i * 12345 + 67890) % 100000) / 100000 - 0.5;
-    const angle = angleBase + ringOffset + jitterA * 0.4;
-    const radius = ring * 14 + jitterR * 5;
-    positions.push({
-      x: 50 + Math.cos(angle) * radius,
-      y: 50 + Math.sin(angle) * radius,
-    });
+  if (!entries.length) return [];
+
+  const container = document.getElementById('results-area');
+  if (!container) return entries.map(() => ({ x: 50, y: 50 }));
+
+  const W = container.clientWidth;
+  const H = container.clientHeight;
+  if (W === 0 || H === 0) return entries.map(() => ({ x: 50, y: 50 }));
+
+  const max = entries[0][1];
+  const PAD = 8;          // px breathing room between bounding boxes
+  const EDGE = 6;         // px inset from container edges
+  const MAX_STEPS = 1500; // spiral search budget per word
+
+  // Build sized entries with font-size/weight per tier.
+  const sized = entries.map(([word, count], i) => {
+    const isTop      = i === 0;
+    const isHighTier = !isTop && count >= max * 0.5;
+    const sizePx = 14 + Math.sqrt(count / max) * 44;
+    const weight = isTop ? 800 : isHighTier ? 700 : 500;
+    return { word, count, isTop, idx: i, sizePx, weight };
+  });
+
+  // Measure each word with an offscreen span that mirrors .cloud-word's
+  // typography so the bounding box reflects the actual rendered size.
+  const measurer = document.createElement('span');
+  measurer.style.cssText =
+    'position:absolute;visibility:hidden;left:0;top:0;' +
+    'white-space:nowrap;font-family:inherit;letter-spacing:0.02em;' +
+    'line-height:1.05;padding:2px 8px;';
+  container.appendChild(measurer);
+  for (const s of sized) {
+    measurer.style.fontSize   = s.sizePx + 'px';
+    measurer.style.fontWeight = String(s.weight);
+    measurer.textContent      = s.word;
+    s.w = measurer.offsetWidth;
+    s.h = measurer.offsetHeight;
   }
-  return positions;
+  measurer.remove();
+
+  // Placement priority: largest area first. The top word is the largest,
+  // so it gets the dead-center slot first; smaller words fan out from there.
+  const queue = [...sized].sort((a, b) => (b.w * b.h) - (a.w * a.h));
+  const placed = []; // { x, y, w, h } top-left corner in container px
+
+  const fits = (bx, by, bw, bh) => {
+    if (bx < EDGE || by < EDGE || bx + bw > W - EDGE || by + bh > H - EDGE) return false;
+    for (const p of placed) {
+      if (bx       < p.x + p.w + PAD &&
+          bx + bw  > p.x - PAD &&
+          by       < p.y + p.h + PAD &&
+          by + bh  > p.y - PAD) return false;
+    }
+    return true;
+  };
+
+  for (const s of queue) {
+    let ok = false;
+
+    // 1. Center slot — top word has natural dibs here.
+    const cbx = W / 2 - s.w / 2;
+    const cby = H / 2 - s.h / 2;
+    if (fits(cbx, cby, s.w, s.h)) {
+      s.bx = cbx; s.by = cby;
+      placed.push({ x: cbx, y: cby, w: s.w, h: s.h });
+      ok = true;
+    }
+
+    // 2. Archimedean spiral outward from center, per-word phase offset
+    //    so two words never search identical angles.
+    if (!ok) {
+      const phase = s.idx * 0.9;
+      for (let step = 1; step <= MAX_STEPS; step++) {
+        const t = step * 0.45;
+        const r = t;
+        const angle = t + phase;
+        const cx = W / 2 + Math.cos(angle) * r;
+        const cy = H / 2 + Math.sin(angle) * r;
+        const bx = cx - s.w / 2;
+        const by = cy - s.h / 2;
+        if (fits(bx, by, s.w, s.h)) {
+          s.bx = bx; s.by = by;
+          placed.push({ x: bx, y: by, w: s.w, h: s.h });
+          ok = true;
+          break;
+        }
+      }
+    }
+
+    // 3. Couldn't fit. Park off-canvas — better invisible than stomping the
+    //    top word.
+    if (!ok) { s.bx = -9999; s.by = -9999; }
+  }
+
+  // Convert each entry's pixel top-left back to a CENTER position in % so it
+  // composes cleanly with .cloud-word's `transform: translate(-50%, -50%)`.
+  return sized.map(s => ({
+    x: ((s.bx + s.w / 2) / W) * 100,
+    y: ((s.by + s.h / 2) / H) * 100,
+  }));
 }
 
 function renderRatingResults(responses) {
