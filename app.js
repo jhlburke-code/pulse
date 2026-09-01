@@ -162,14 +162,55 @@ function renderCloudResults(responses) {
       counts[w] = (counts[w] || 0) + 1;
     });
   });
-  const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 60);
+  const entries = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, 50);
   if (!entries.length) return '<p class="results-empty muted">Waiting for the first response…</p>';
+
   const max = entries[0][1];
-  return entries.map(([w, c]) => {
-    const scale = 0.85 + (c / max) * 1.6;
-    const tier = c === max && c > 1 ? 'tier-1' : c >= max * 0.5 ? 'tier-2' : '';
-    return `<span class="cloud-word fresh ${tier}" style="font-size:${scale.toFixed(2)}em" data-w="${escapeHtml(w)}">${escapeHtml(w)}</span>`;
+  const positions = placeWordsCloud(entries);
+
+  return positions.map((pos, i) => {
+    const word  = entries[i][0];
+    const count = entries[i][1];
+    const isTop      = i === 0;
+    const isHighTier = !isTop && count >= max * 0.5;
+
+    // sqrt scale so very common words don't dwarf everything else
+    const sizePx = 14 + Math.sqrt(count / max) * 44; // 14 .. 58
+
+    const weight  = isTop ? 800 : isHighTier ? 700 : 500;
+    const color   = isTop ? 'var(--red)' : 'var(--white)';
+    const opacity = isTop ? 1 : (isHighTier ? 0.95 : 0.78);
+
+    return `<span class="cloud-word${isTop ? ' tier-1' : ''}"
+                  style="left:${pos.x.toFixed(1)}%;top:${pos.y.toFixed(1)}%;font-size:${sizePx.toFixed(0)}px;font-weight:${weight};color:${color};opacity:${opacity}"
+                  data-w="${escapeHtml(word)}"
+                  title="${escapeHtml(word)} · ${count} ${count === 1 ? 'vote' : 'votes'}">${escapeHtml(word)}</span>`;
   }).join('');
+}
+
+// Position words in concentric rings around the center, with deterministic jitter
+// so layout is stable across renders but doesn't look like a clock face.
+function placeWordsCloud(entries) {
+  const positions = [];
+  for (let i = 0; i < entries.length; i++) {
+    if (i === 0) {
+      positions.push({ x: 50, y: 50 });
+      continue;
+    }
+    const ring       = Math.floor((i - 1) / 6) + 1;
+    const idxInRing  = (i - 1) % 6;
+    const angleBase   = (idxInRing / 6) * Math.PI * 2;
+    const ringOffset  = ring * 0.45;
+    const jitterA     = ((i * 9301  + 49297) % 233280) / 233280 - 0.5;
+    const jitterR     = ((i * 12345 + 67890) % 100000) / 100000 - 0.5;
+    const angle = angleBase + ringOffset + jitterA * 0.4;
+    const radius = ring * 14 + jitterR * 5;
+    positions.push({
+      x: 50 + Math.cos(angle) * radius,
+      y: 50 + Math.sin(angle) * radius,
+    });
+  }
+  return positions;
 }
 
 function renderRatingResults(responses) {
