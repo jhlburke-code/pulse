@@ -230,6 +230,8 @@ h2.question-text {
 /* ----- Generic page wrapper ----- */
 
 .page-wrap {
+  display: flex;
+  flex-direction: column;
   padding: 0 40px 60px;
   min-height: 100vh;
 }
@@ -339,6 +341,7 @@ h2.question-text {
 .presenter-live {
   display: flex;
   flex-direction: column;
+  flex: 1;
   gap: 28px;
   padding-top: 24px !important;
   padding-bottom: 24px !important;
@@ -420,6 +423,7 @@ h2.question-text {
   flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 14px;
   min-height: 200px;
 }
@@ -560,6 +564,7 @@ h2.question-text {
   align-items: center;
   gap: 16px;
   padding-top: 20px;
+  margin-top: auto;
   border-top: 1px solid var(--white-faint);
 }
 .live-footer .slogan-mini { margin-left: auto; font-size: 18px; }
